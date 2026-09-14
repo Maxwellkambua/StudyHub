@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0b0f" />
+<link rel="manifest" href="/manifest.json" />
+<title>StudyHub — AI study companion</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#0a0b0f; --bg-elev:#111318; --card:#15171e; --card-hover:#1a1d26;
+  --sidebar:#0d0e13; --border:#22252f; --border-strong:#2e323e;
+  --text:#eef0f4; --text-dim:#a4abba; --text-mute:#6b7280;
+  --accent:#4ade80; --accent-soft:#16341f; --accent-glow:rgba(74,222,128,.15);
+  --blue:#60a5fa; --amber:#fbbf24; --red:#f87171; --purple:#a78bfa;
+  --shadow:0 4px 16px rgba(0,0,0,.4); --shadow-lg:0 12px 40px rgba(0,0,0,.5);
+  --radius-sm:8px; --radius:12px; --radius-lg:16px; --radius-xl:22px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+[data-theme="light"] {
+  --bg:#f5f6f9; --bg-elev:#fff; --card:#fff; --card-hover:#fafbfc;
+  --sidebar:#fff; --border:#e4e7ec; --border-strong:#d0d5dd;
+  --text:#101828; --text-dim:#475467; --text-mute:#98a2b3;
+  --accent:#16a34a; --accent-soft:#dcfce7; --accent-glow:rgba(22,163,74,.12);
+  --blue:#2563eb; --amber:#d97706; --red:#dc2626; --purple:#7c3aed;
+  --shadow:0 4px 16px rgba(16,24,40,.08); --shadow-lg:0 12px 40px rgba(16,24,40,.12);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; }
+body { background:var(--bg); color:var(--text); font-family:var(--font);
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  transition:background .25s var(--ease), color .25s var(--ease); }
+body::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 500px at 15% -10%, var(--accent-glow), transparent 60%),
+    radial-gradient(700px 400px at 90% 10%, rgba(96,165,250,.06), transparent 60%); }
+a { color:inherit; text-decoration:none; }
+.hidden { display:none !important; }
+
+/* AUTH */
+.auth-wrap { min-height:100vh; display:grid; place-items:center; padding:40px 20px; position:relative; z-index:1; }
+.auth-card { width:100%; max-width:420px; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-xl); padding:32px; box-shadow:var(--shadow-lg); }
+.brand-large { display:flex; align-items:center; gap:12px; margin-bottom:26px; }
+.brand-mark { width:34px; height:34px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),#22c55e); display:grid; place-items:center;
+  font-size:16px; font-weight:800; color:#052e13; box-shadow:0 6px 20px var(--accent-glow); }
+.brand-name { font-weight:700; font-size:17px; letter-spacing:-.3px; }
+.brand-name span { color:var(--accent); }
+.auth-card h1 { font-size:26px; letter-spacing:-.5px; margin-bottom:6px; }
+.auth-card .sub { color:var(--text-dim); font-size:14px; margin-bottom:26px; }
+.auth-hint { color:var(--text-mute); font-size:12px; text-align:center; margin-top:16px; }
+
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:12.5px; font-weight:600; color:var(--text-dim); margin-bottom:6px; }
+input, select, textarea { width:100%; padding:11px 13px; background:var(--bg-elev);
+  border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text);
+  font:inherit; font-size:14.5px; transition:all .15s var(--ease); outline:none; }
+input::placeholder, textarea::placeholder { color:var(--text-mute); }
+input:hover, select:hover, textarea:hover { border-color:var(--border-strong); }
+input:focus, select:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+textarea { resize:vertical; min-height:78px; }
+input[type="file"] { padding:10px; cursor:pointer; font-size:13px; }
+
+button { font:inherit; font-weight:600; font-size:14px; cursor:pointer; border:0;
+  border-radius:var(--radius-sm); padding:11px 18px; background:var(--accent); color:#052e13;
+  transition:all .15s var(--ease); display:inline-flex; align-items:center; justify-content:center;
+  gap:7px; white-space:nowrap; }
+button:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 22px var(--accent-glow); }
+button:active:not(:disabled) { transform:translateY(0); }
+button:disabled { opacity:.55; cursor:not-allowed; }
+button.ghost { background:transparent; color:var(--text); border:1px solid var(--border-strong); }
+button.ghost:hover:not(:disabled) { background:var(--card); border-color:var(--accent); color:var(--accent); box-shadow:none; }
+button.subtle { background:var(--card); color:var(--text-dim); border:1px solid var(--border);
+  font-weight:500; font-size:13px; padding:8px 12px; }
+button.subtle:hover:not(:disabled) { color:var(--text); border-color:var(--border-strong); box-shadow:none; transform:none; }
+.btn-row { display:flex; gap:10px; margin-top:8px; }
+.btn-row > * { flex:1; }
+
+.app-shell { display:grid; grid-template-columns:240px 1fr; min-height:100vh; position:relative; z-index:1; }
+.sidebar { background:var(--sidebar); border-right:1px solid var(--border);
+  padding:22px 16px; display:flex; flex-direction:column; gap:18px;
+  position:sticky; top:0; height:100vh; overflow-y:auto; }
+.sidebar-brand { display:flex; align-items:center; gap:10px; padding:0 6px; }
+.sidebar-nav { display:flex; flex-direction:column; gap:3px; flex:1; }
+.nav-item { display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:9px;
+  color:var(--text-dim); font-size:14px; font-weight:500; transition:all .15s var(--ease); cursor:pointer; }
+.nav-item:hover { background:var(--card); color:var(--text); }
+.nav-item.active { background:var(--accent-soft); color:var(--accent); }
+.nav-icon { display:inline-grid; place-items:center; width:22px; height:22px; font-size:13px; }
+.nav-badge { margin-left:auto; font-size:10.5px; font-weight:700; padding:2px 7px;
+  border-radius:99px; background:var(--accent); color:#052e13; }
+.nav-badge.red { background:var(--red); color:#fff; }
+.sidebar-footer { display:flex; flex-direction:column; gap:10px; padding-top:16px; border-top:1px solid var(--border); }
+.theme-toggle { background:var(--card); color:var(--text-dim); border:1px solid var(--border);
+  padding:9px 12px; font-weight:500; font-size:13px; justify-content:flex-start; width:100%; }
+.theme-toggle:hover:not(:disabled) { color:var(--accent); border-color:var(--accent); box-shadow:none; transform:none; }
+.theme-toggle .theme-icon { display:inline-grid; place-items:center; width:22px; font-size:15px; transition:transform .4s var(--ease); }
+.theme-toggle:hover .theme-icon { transform:rotate(180deg); }
+.user-chip { display:flex; align-items:center; gap:10px; padding:8px 6px; cursor:pointer; border-radius:9px; transition:background .15s var(--ease); }
+.user-chip:hover { background:var(--card); }
+.user-avatar { width:34px; height:34px; border-radius:50%; background:var(--accent-soft);
+  color:var(--accent); display:grid; place-items:center; font-weight:700; font-size:14px; flex-shrink:0; }
+.user-info { min-width:0; flex:1; }
+.user-name { font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-sub { font-size:11.5px; color:var(--text-mute); }
+.streak-mini { display:inline-flex; align-items:center; gap:4px; padding:3px 9px;
+  border-radius:99px; background:rgba(251,191,36,.1); color:var(--amber);
+  border:1px solid rgba(251,191,36,.25); font-size:11.5px; font-weight:700; }
+.conn-row { display:flex; gap:6px; flex-wrap:wrap; padding:0 6px; }
+.pill { padding:3px 9px; border-radius:99px; font-size:10.5px; font-weight:600;
+  letter-spacing:.2px; border:1px solid var(--border-strong); background:var(--bg-elev); color:var(--text-dim); }
+.pill.ok { color:var(--accent); border-color:rgba(74,222,128,.35); background:var(--accent-soft); }
+.pill.warn { color:var(--amber); border-color:rgba(251,191,36,.3); background:rgba(251,191,36,.08); }
+.pill.info { color:var(--blue); border-color:rgba(96,165,250,.3); background:rgba(96,165,250,.08); }
+.pill.live { color:var(--red); border-color:rgba(248,113,113,.3); background:rgba(248,113,113,.08); }
+
+.mobile-header { display:none; }
+.bottom-nav { display:none; }
+
+.content { padding:28px 32px 100px; max-width:1000px; width:100%; margin:0 auto; min-width:0; }
+.page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+  margin-bottom:22px; flex-wrap:wrap; }
+.page-head h1 { font-size:22px; font-weight:700; letter-spacing:-.4px; margin-bottom:4px; }
+.page-head .hint { color:var(--text-dim); font-size:13.5px; }
+
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px; margin-bottom:12px; transition:all .18s var(--ease); position:relative;
+  overflow:hidden; animation:fadeUp .25s var(--ease); }
+.card::before { content:""; position:absolute; inset:0 auto 0 0; width:3px;
+  background:var(--accent); opacity:0; transition:opacity .18s var(--ease); }
+.card.clickable { cursor:pointer; }
+.card:hover { border-color:var(--border-strong); background:var(--card-hover);
+  transform:translateY(-1px); box-shadow:var(--shadow); }
+.card:hover::before { opacity:.7; }
+.card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.card-title { font-size:15.5px; font-weight:600; letter-spacing:-.2px; line-height:1.35; flex:1; }
+.kind-badge { flex-shrink:0; font-size:10.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.6px; padding:4px 9px; border-radius:6px; background:var(--bg-elev);
+  border:1px solid var(--border-strong); color:var(--text-dim); }
+.kind-badge.notes { color:var(--blue); border-color:rgba(96,165,250,.3); background:rgba(96,165,250,.08); }
+.kind-badge.past-paper { color:var(--purple); border-color:rgba(167,139,250,.3); background:rgba(167,139,250,.08); }
+.kind-badge.slides { color:var(--amber); border-color:rgba(251,191,36,.3); background:rgba(251,191,36,.08); }
+.kind-badge.video { color:var(--red); border-color:rgba(248,113,113,.3); background:rgba(248,113,113,.08); }
+.card-meta { color:var(--text-dim); font-size:12.5px; margin-bottom:10px; }
+.card-desc { color:var(--text-dim); font-size:13.5px; line-height:1.5; margin-bottom:12px; }
+.card-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.tag { font-size:11.5px; color:var(--text-dim); background:var(--bg-elev);
+  border:1px solid var(--border); padding:2px 8px; border-radius:99px; }
+.reasons { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.reason { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:500;
+  padding:4px 10px; border-radius:99px; background:var(--accent-soft); color:var(--accent);
+  border:1px solid rgba(74,222,128,.15); }
+.reason.score { background:var(--bg-elev); color:var(--text-mute); border-color:var(--border);
+  font-family:var(--mono); font-size:10.5px; }
+.reason::before { content:""; width:4px; height:4px; border-radius:50%; background:currentColor; }
+.reason.score::before { display:none; }
+
+.card-actions { display:grid; grid-template-columns:repeat(auto-fit, minmax(70px, 1fr));
+  gap:6px; padding-top:12px; border-top:1px solid var(--border); margin-top:12px; }
+.card-actions > a, .card-actions > button { font-size:12px; font-weight:500; padding:8px 6px;
+  border-radius:7px; background:var(--bg-elev); border:1px solid var(--border);
+  color:var(--text-dim); transition:all .15s var(--ease); display:inline-flex;
+  align-items:center; justify-content:center; gap:5px; cursor:pointer; width:100%;
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card-actions > a:hover, .card-actions > button:hover { color:var(--accent);
+  border-color:rgba(74,222,128,.4); background:var(--accent-soft); transform:translateY(-1px); box-shadow:none; }
+.card-actions .primary-link { color:var(--accent); border-color:rgba(74,222,128,.3); background:var(--accent-soft); }
+.card-actions .bm-btn.bookmarked { color:var(--amber); border-color:rgba(251,191,36,.4); background:rgba(251,191,36,.08); }
+
+.course-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; }
+.course-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px; cursor:pointer; transition:all .18s var(--ease); animation:fadeUp .25s var(--ease); }
+.course-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow); }
+.course-code { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--accent);
+  letter-spacing:.5px; margin-bottom:6px; }
+.course-title { font-size:14.5px; font-weight:600; line-height:1.35; margin-bottom:10px; }
+.course-meta { font-size:12px; color:var(--text-mute); }
+
+.detail-head { margin-bottom:20px; }
+.detail-head h1 { font-size:24px; letter-spacing:-.5px; margin-bottom:8px; line-height:1.25; }
+.detail-meta { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px;
+  color:var(--text-dim); font-size:13px; }
+.pdf-viewer { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  overflow:hidden; margin-bottom:16px; min-height:700px; position:relative; }
+.pdf-viewer iframe, .pdf-viewer embed { width:100%; height:700px; border:0; display:block; background:#fff; }
+.pdf-fallback { padding:60px 20px; text-align:center; color:var(--text-dim); }
+
+.comments-section { margin-top:24px; }
+.comments-section h2 { font-size:17px; font-weight:700; margin-bottom:14px; letter-spacing:-.3px; }
+.comment { display:flex; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); animation:fadeUp .2s var(--ease); }
+.comment:last-child { border-bottom:0; }
+.comment-avatar { width:34px; height:34px; border-radius:50%; background:var(--accent-soft);
+  color:var(--accent); display:grid; place-items:center; font-weight:700; font-size:13px; flex-shrink:0; }
+.comment-body { flex:1; min-width:0; }
+.comment-head { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.comment-name { font-weight:600; font-size:13.5px; }
+.comment-time { color:var(--text-mute); font-size:11.5px; }
+.comment-text { color:var(--text-dim); font-size:13.5px; line-height:1.55; word-wrap:break-word; white-space:pre-wrap; }
+.comment-form { display:flex; gap:10px; margin-top:16px; align-items:flex-end; }
+.comment-form textarea { min-height:70px; flex:1; }
+.comment-form input { flex:1; }
+
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:12px; margin-bottom:16px; }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px; transition:all .18s var(--ease); }
+.stat:hover { border-color:var(--border-strong); transform:translateY(-1px); }
+.stat .n { font-size:26px; font-weight:700; letter-spacing:-.5px; color:var(--accent);
+  line-height:1; margin-bottom:6px; font-variant-numeric:tabular-nums; }
+.stat .n.blue { color:var(--blue); } .stat .n.amber { color:var(--amber); }
+.stat .n.purple { color:var(--purple); } .stat .n.red { color:var(--red); }
+.stat .l { font-size:12px; color:var(--text-dim); text-transform:uppercase;
+  letter-spacing:.5px; font-weight:600; }
+
+.profile-hero { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+@media (max-width:600px) { .profile-hero { grid-template-columns:1fr; } }
+.streak-block { background:linear-gradient(135deg, rgba(251,191,36,.12), rgba(251,191,36,.02));
+  border:1px solid rgba(251,191,36,.25); border-radius:var(--radius-lg); padding:24px; text-align:center; }
+.streak-flame { font-size:42px; margin-bottom:6px; }
+.streak-num { font-size:52px; font-weight:800; letter-spacing:-2px; color:var(--amber);
+  line-height:1; margin-bottom:6px; font-variant-numeric:tabular-nums; }
+.streak-label { color:var(--text-dim); font-size:12.5px; text-transform:uppercase;
+  letter-spacing:.6px; font-weight:600; }
+.streak-secondary { display:flex; flex-direction:column; gap:10px; }
+.streak-longest { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:20px; display:flex; flex-direction:column;
+  justify-content:center; gap:4px; flex:1; }
+.streak-longest strong { font-size:28px; font-weight:800; color:var(--accent);
+  letter-spacing:-.5px; font-variant-numeric:tabular-nums; }
+.streak-longest span { color:var(--text-dim); font-size:12px; text-transform:uppercase;
+  letter-spacing:.5px; font-weight:600; }
+
+.leaderboard { display:flex; flex-direction:column; gap:8px; }
+.lb-row { display:grid; grid-template-columns:44px 1fr repeat(3, 80px) 90px; gap:12px;
+  align-items:center; padding:14px 16px; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); transition:all .15s var(--ease); }
+.lb-row:hover { border-color:var(--border-strong); transform:translateX(2px); }
+.lb-rank { font-size:18px; font-weight:800; color:var(--text-mute); font-family:var(--mono); text-align:center; }
+.lb-rank.gold { color:var(--amber); } .lb-rank.silver { color:#c0c0c0; } .lb-rank.bronze { color:#cd7f32; }
+.lb-name { font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lb-cell { text-align:center; font-size:13px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.lb-score { text-align:right; font-weight:700; color:var(--accent); font-size:15px; font-variant-numeric:tabular-nums; }
+@media (max-width:700px) {
+  .lb-row { grid-template-columns:36px 1fr 80px; }
+  .lb-cell.hide-mobile { display:none; }
+}
+
+.filter-bar { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:10px; margin-bottom:16px; }
+.filter-bar select, .filter-bar input { font-size:13px; padding:9px 11px; }
+
+.notif-drawer { position:fixed; top:0; right:0; bottom:0; width:380px; max-width:100vw;
+  background:var(--card); border-left:1px solid var(--border); z-index:200;
+  transform:translateX(100%); transition:transform .3s var(--ease);
+  display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
+.notif-drawer.open { transform:translateX(0); }
+.notif-head { padding:18px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; }
+.notif-head h2 { font-size:16px; font-weight:700; }
+.notif-body { flex:1; overflow-y:auto; padding:8px 0; }
+.notif-item { padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer;
+  transition:background .15s var(--ease); display:flex; gap:12px; }
+.notif-item:hover { background:var(--card-hover); }
+.notif-item.unread { background:var(--accent-soft); }
+.notif-icon { width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  flex-shrink:0; font-size:15px; background:var(--bg-elev); border:1px solid var(--border-strong); }
+.notif-icon.new_material { color:var(--accent); border-color:rgba(74,222,128,.35); }
+.notif-icon.comment { color:var(--blue); border-color:rgba(96,165,250,.35); }
+.notif-icon.info { color:var(--text-dim); }
+.notif-content { flex:1; min-width:0; }
+.notif-title { font-weight:600; font-size:13.5px; margin-bottom:2px; }
+.notif-text { color:var(--text-dim); font-size:12.5px; overflow:hidden; text-overflow:ellipsis; }
+.notif-time { color:var(--text-mute); font-size:11px; margin-top:4px; }
+.notif-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:199;
+  opacity:0; pointer-events:none; transition:opacity .3s var(--ease); }
+.notif-backdrop.open { opacity:1; pointer-events:auto; }
+
+.timer-widget { position:fixed; bottom:24px; left:24px; z-index:150;
+  background:var(--card); border:1px solid var(--border-strong); border-radius:var(--radius-lg);
+  padding:14px 16px; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:12px;
+  transition:all .25s var(--ease); min-width:220px; }
+.timer-widget.hidden { display:none; }
+.timer-widget.running { border-color:rgba(74,222,128,.5); box-shadow:0 12px 40px rgba(74,222,128,.15); }
+.timer-widget.break { border-color:rgba(96,165,250,.5); }
+.timer-icon { font-size:22px; }
+.timer-info { flex:1; min-width:0; }
+.timer-label { font-size:11px; color:var(--text-mute); text-transform:uppercase;
+  letter-spacing:.5px; font-weight:600; }
+.timer-time { font-size:22px; font-weight:800; letter-spacing:-.5px;
+  font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.timer-btns { display:flex; gap:6px; }
+.timer-btns button { padding:6px 10px; font-size:12px; }
+.timer-close { position:absolute; top:6px; right:8px; background:transparent; color:var(--text-mute);
+  padding:2px 6px; font-size:14px; border:0; width:auto; }
+.timer-close:hover { color:var(--red); box-shadow:none; transform:none; }
+@media (max-width:900px) { .timer-widget { bottom:80px; left:14px; right:14px; min-width:0; } }
+
+.install-banner { position:fixed; bottom:24px; right:24px; z-index:160;
+  background:linear-gradient(135deg,var(--accent-soft),var(--card));
+  border:1px solid rgba(74,222,128,.3); border-radius:var(--radius-lg);
+  padding:14px 16px; box-shadow:var(--shadow-lg); max-width:340px;
+  display:flex; align-items:center; gap:12px; animation:slideIn .35s var(--ease); }
+.install-banner.hidden { display:none; }
+.install-banner-icon { font-size:26px; flex-shrink:0; }
+.install-banner-text { flex:1; font-size:13px; line-height:1.4; }
+.install-banner-text strong { display:block; font-weight:600; margin-bottom:2px; }
+.install-banner-btns { display:flex; gap:6px; margin-top:8px; }
+.install-banner-btns button { padding:6px 12px; font-size:12px; }
+@media (max-width:900px) { .install-banner { left:14px; right:14px; bottom:80px; max-width:none; } }
+
+.notice { padding:12px 14px; border-radius:var(--radius-sm); font-size:13.5px;
+  margin-bottom:16px; display:flex; align-items:center; gap:10px; border:1px solid;
+  animation:slideDown .3s var(--ease); }
+.notice.info { background:var(--accent-soft); color:var(--accent); border-color:rgba(74,222,128,.2); }
+.notice.warn { background:rgba(251,191,36,.08); color:var(--amber); border-color:rgba(251,191,36,.25); }
+.notice::before { content:"◆"; font-size:10px; }
+
+.skeleton { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px; margin-bottom:12px; }
+.skel-line { height:12px;
+  background:linear-gradient(90deg, var(--border) 0%, var(--border-strong) 50%, var(--border) 100%);
+  background-size:200% 100%; border-radius:6px; animation:shimmer 1.6s infinite; margin-bottom:10px; }
+.skel-line.w-60 { width:60%; } .skel-line.w-40 { width:40%; } .skel-line.w-80 { width:80%; }
+@keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+
+.empty { text-align:center; padding:60px 20px; color:var(--text-mute); }
+.empty-icon { font-size:40px; margin-bottom:14px; opacity:.5; }
+.empty-title { font-size:16px; font-weight:600; color:var(--text-dim); margin-bottom:6px; }
+.empty-hint { font-size:13.5px; max-width:320px; margin:0 auto; }
+
+.toast-stack { position:fixed; bottom:24px; right:24px; z-index:999;
+  display:flex; flex-direction:column; gap:10px; max-width:340px; }
+.toast { background:var(--card); border:1px solid var(--border-strong); border-radius:var(--radius);
+  padding:13px 16px; font-size:13.5px; box-shadow:var(--shadow-lg); display:flex;
+  align-items:flex-start; gap:10px; animation:slideIn .3s var(--ease); color:var(--text); }
+.toast.success { border-left:3px solid var(--accent); }
+.toast.error { border-left:3px solid var(--red); }
+.toast.info { border-left:3px solid var(--blue); }
+.toast.live { border-left:3px solid var(--purple); }
+.toast-icon { font-size:16px; line-height:1.2; }
+.toast.success .toast-icon { color:var(--accent); }
+.toast.error .toast-icon { color:var(--red); }
+.toast.info .toast-icon { color:var(--blue); }
+.toast.live .toast-icon { color:var(--purple); }
+
+.form-card { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:24px; }
+.drop-zone { border:2px dashed var(--border-strong); border-radius:var(--radius);
+  padding:32px 20px; text-align:center; cursor:pointer; transition:all .2s var(--ease);
+  background:var(--bg-elev); }
+.drop-zone:hover, .drop-zone.dragover { border-color:var(--accent); background:var(--accent-soft); }
+.drop-zone-icon { font-size:28px; margin-bottom:8px; opacity:.6; }
+.drop-zone-title { font-weight:600; font-size:14px; margin-bottom:4px; }
+.drop-zone-hint { font-size:12px; color:var(--text-mute); }
+.drop-zone input[type="file"] { display:none; }
+.file-selected { display:none; align-items:center; gap:10px; padding:10px 14px;
+  background:var(--accent-soft); border:1px solid rgba(74,222,128,.25);
+  border-radius:var(--radius-sm); color:var(--accent); font-size:13px; margin-top:10px; }
+.file-selected.show { display:flex; }
+.file-selected .name { flex:1; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.file-selected .size { color:var(--text-dim); font-size:12px; }
+
+.low-data body::before { display:none; }
+.low-data .card::before { display:none; }
+.low-data .card { animation:none; }
+.low-data .card-desc, .low-data .reasons, .low-data .card-tags { display:none; }
+.low-data .timer-widget, .low-data .install-banner { display:none !important; }
+
+@media (max-width:900px) {
+  .app-shell { grid-template-columns:1fr; padding-top:60px; padding-bottom:70px; }
+  .sidebar { display:none; }
+  .mobile-header { display:flex; position:fixed; top:0; left:0; right:0; height:56px;
+    padding:0 16px; background:rgba(10,11,15,.85); backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px); border-bottom:1px solid var(--border);
+    align-items:center; justify-content:space-between; z-index:50; }
+  [data-theme="light"] .mobile-header { background:rgba(255,255,255,.85); }
+  .mobile-header .brand { display:flex; align-items:center; gap:10px; }
+  .mobile-actions { display:flex; gap:6px; }
+  .icon-btn { width:36px; height:36px; padding:0; border-radius:10px;
+    background:var(--card); border:1px solid var(--border); color:var(--text-dim); font-size:16px; }
+  .icon-btn:hover { color:var(--accent); border-color:var(--accent); box-shadow:none; transform:none; }
+  .bottom-nav { display:flex; position:fixed; bottom:0; left:0; right:0;
+    background:rgba(10,11,15,.9); backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px); border-top:1px solid var(--border);
+    padding:6px 0 max(6px, env(safe-area-inset-bottom)); z-index:50; }
+  [data-theme="light"] .bottom-nav { background:rgba(255,255,255,.9); }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 4px; font-size:10.5px; font-weight:500; color:var(--text-mute);
+    transition:color .15s var(--ease); cursor:pointer; position:relative; }
+  .bnav-item.active { color:var(--accent); }
+  .bnav-icon { font-size:18px; }
+  .bnav-badge { position:absolute; top:4px; right:22%; font-size:9px; font-weight:700;
+    background:var(--red); color:#fff; padding:1px 5px; border-radius:99px; }
+  .content { padding:20px 16px 100px; }
+  .toast-stack { left:14px; right:14px; bottom:80px; max-width:none; }
+  .page-head h1 { font-size:19px; }
+  .detail-head h1 { font-size:20px; }
+  .pdf-viewer, .pdf-viewer iframe, .pdf-viewer embed { min-height:500px; height:500px; }
+  .notif-drawer { width:100vw; }
+  .comment-form { flex-direction:column; align-items:stretch; }
+}
+</style>
+</head>
+<body>
+
+<div id="authView" class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-large">
+      <div class="brand-mark">S</div>
+      <div class="brand-name">Study<span>Hub</span></div>
+    </div>
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to continue studying smarter.</p>
+    <div class="field">
+      <label>Email</label>
+      <input id="email" type="email" value="demo@studyhub.ai" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="password" type="password" value="demo1234" autocomplete="current-password" />
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button onclick="login()">Sign in</button>
+      <button class="ghost" onclick="register()">Create account</button>
+    </div>
+    <p class="auth-hint">Demo credentials are pre-filled</p>
+  </div>
+</div>
+
+<div id="appShell" class="app-shell hidden">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">S</div>
+      <div class="brand-name">Study<span>Hub</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" data-nav="recs"        onclick="location.hash='#/'"><span class="nav-icon">◆</span><span>For You</span></div>
+      <div class="nav-item" data-nav="search"      onclick="location.hash='#/search'"><span class="nav-icon">⌕</span><span>Search</span></div>
+      <div class="nav-item" data-nav="browse"      onclick="location.hash='#/browse'"><span class="nav-icon">▤</span><span>Browse</span></div>
+      <div class="nav-item" data-nav="saved"       onclick="location.hash='#/saved'"><span class="nav-icon">★</span><span>Saved</span><span class="nav-badge" id="savedBadge" style="display:none">0</span></div>
+      <div class="nav-item" data-nav="notes"       onclick="location.hash='#/notes'"><span class="nav-icon">✎</span><span>My Notes</span></div>
+      <div class="nav-item" data-nav="groups"      onclick="location.hash='#/groups'"><span class="nav-icon">👥</span><span>Groups</span></div>
+      <div class="nav-item" data-nav="leaderboard" onclick="location.hash='#/leaderboard'"><span class="nav-icon">🏆</span><span>Leaderboard</span></div>
+      <div class="nav-item" data-nav="upload"      onclick="location.hash='#/upload'"><span class="nav-icon">↑</span><span>Upload</span></div>
+      <div class="nav-item" data-nav="stats"       onclick="location.hash='#/stats'"><span class="nav-icon">◈</span><span>Stats</span></div>
+      <div class="nav-item" data-nav="admin" id="adminNavItem" onclick="location.hash='#/admin'" style="display:none"><span class="nav-icon">⚙</span><span>Moderation</span><span class="nav-badge red" id="flagBadge" style="display:none">0</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="streakBadgeRow" style="padding:0 6px"></div>
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span class="theme-icon">◐</span><span class="theme-label">Theme</span>
+      </button>
+      <div class="user-chip" onclick="location.hash='#/profile'">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name">…</div>
+          <div class="user-sub">View profile</div>
+        </div>
+      </div>
+      <div class="conn-row" id="connRow"></div>
+    </div>
+  </aside>
+
+  <header class="mobile-header">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="brand-name">Study<span>Hub</span></div>
+    </div>
+    <div class="mobile-actions">
+      <button class="icon-btn" onclick="openNotifDrawer()" id="notifBtnMobile">🔔</button>
+      <button class="icon-btn" onclick="toggleTheme()">◐</button>
+    </div>
+  </header>
+
+  <main class="content" id="content"></main>
+
+  <nav class="bottom-nav">
+    <div class="bnav-item" data-nav="recs"   onclick="location.hash='#/'"><span class="bnav-icon">◆</span><span>For You</span></div>
+    <div class="bnav-item" data-nav="search" onclick="location.hash='#/search'"><span class="bnav-icon">⌕</span><span>Search</span></div>
+    <div class="bnav-item" data-nav="saved"  onclick="location.hash='#/saved'"><span class="bnav-icon">★</span><span>Saved</span></div>
+    <div class="bnav-item" data-nav="groups" onclick="location.hash='#/groups'"><span class="bnav-icon">👥</span><span>Groups</span></div>
+    <div class="bnav-item" data-nav="profile" onclick="location.hash='#/profile'"><span class="bnav-icon">◉</span><span>You</span></div>
+  </nav>
+</div>
+
+<div class="notif-backdrop" id="notifBackdrop" onclick="closeNotifDrawer()"></div>
+<aside class="notif-drawer" id="notifDrawer">
+  <div class="notif-head">
+    <h2>Notifications</h2>
+    <div style="display:flex;gap:6px">
+      <button class="subtle" onclick="markAllRead()" style="font-size:12px;padding:6px 10px">Mark all read</button>
+      <button class="subtle" onclick="closeNotifDrawer()" style="font-size:12px;padding:6px 10px">Close</button>
+    </div>
+  </div>
+  <div class="notif-body" id="notifBody"></div>
+</aside>
+
+<div class="timer-widget hidden" id="timerWidget">
+  <button class="timer-close" onclick="closeTimer()" title="Close">✕</button>
+  <div class="timer-icon" id="timerIcon">⏱</div>
+  <div class="timer-info">
+    <div class="timer-label" id="timerLabel">Study session</div>
+    <div class="timer-time" id="timerTime">25:00</div>
+  </div>
+  <div class="timer-btns">
+    <button class="subtle" id="timerToggle" onclick="toggleTimer()">Start</button>
+  </div>
+</div>
+
+<div class="install-banner hidden" id="installBanner">
+  <div class="install-banner-icon">📱</div>
+  <div class="install-banner-text">
+    <strong>Install StudyHub</strong>
+    Add to your home screen for offline access.
+    <div class="install-banner-btns">
+      <button onclick="installPWA()">Install</button>
+      <button class="subtle" onclick="dismissInstall()">Later</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* STATE */
+const API = "";
+let token = localStorage.getItem("token");
+let currentUser = null;
+let currentRoute = "recs";
+let currentParam = null;
+let ws = null;
+let bookmarkedIds = new Set();
+let enrolledCourseIds = new Set();
+let materialCache = new Map();
+let notifCache = [];
+let unreadCount = 0;
+let deferredInstallPrompt = null;
+
+/* THEME */
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  localStorage.setItem("theme", t);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", t === "light" ? "#f5f6f9" : "#0a0b0f");
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute("data-theme") || "dark";
+  setTheme(cur === "dark" ? "light" : "dark");
+}
+setTheme(localStorage.getItem("theme") || "dark");
+
+/* CONNECTION */
+const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+const isLowData = !!(conn.saveData || ["slow-2g","2g","3g"].includes(conn.effectiveType));
+if (isLowData) document.documentElement.classList.add("low-data");
+
+function renderConnPills() {
+  const row = document.getElementById("connRow");
+  if (!row) return;
+  const online = navigator.onLine;
+  const wsLive = ws && ws.readyState === WebSocket.OPEN;
+  row.innerHTML = `
+    <span class="pill ${online ? "ok" : "warn"}">${online ? "online" : "offline"}</span>
+    ${isLowData ? '<span class="pill info">low-data</span>' : ""}
+    ${wsLive ? '<span class="pill live">live</span>' : ""}
+  `;
+}
+
+/* TOASTS */
+function toast(message, type = "info", duration = 3800) {
+  const stack = document.getElementById("toastStack");
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  const icons = { success:"✓", error:"✕", info:"i", live:"◉" };
+  el.innerHTML = `<span class="toast-icon">${icons[type] || "•"}</span><span>${escapeHtml(message)}</span>`;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = "opacity .3s, transform .3s";
+    el.style.opacity = "0"; el.style.transform = "translateX(30px)";
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+/* SW + INDEXEDDB */
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+const DB_NAME = "studyhub", DB_VERSION = 1;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      ["recs","materials","bookmarks"].forEach(s => {
+        if (!db.objectStoreNames.contains(s)) db.createObjectStore(s);
+      });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbPut(store, value, key) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).put(value, key);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+async function idbGet(store, key) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(store).objectStore(store).get(key);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+/* API */
+async function api(path, opts = {}) {
+  opts.headers = Object.assign(
+    { "Content-Type": "application/json" },
+    opts.headers || {},
+    token ? { Authorization: "Bearer " + token } : {}
+  );
+  const res = await fetch(API + path, opts);
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { msg = (await res.json()).detail || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+/* WEBSOCKET */
+function connectWS() {
+  if (!token) return;
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const url = `${proto}//${location.host}/ws?token=${encodeURIComponent(token)}`;
+  try { ws = new WebSocket(url); } catch { return; }
+  ws.onopen = () => renderConnPills();
+  ws.onmessage = (e) => { try { handleWSMessage(JSON.parse(e.data)); } catch {} };
+  ws.onclose = () => { ws = null; renderConnPills();
+    setTimeout(() => { if (token) connectWS(); }, 5000); };
+  ws.onerror = () => { try { ws.close(); } catch {} };
+}
+function handleWSMessage(msg) {
+  if (msg.type === "material_created") {
+    toast(`New material: ${msg.material.title}`, "live", 5000);
+    loadNotifications();
+    if (currentRoute === "recs") loadRecommendations(true);
+    if (currentRoute === "course" && String(msg.material.course_id) === String(currentParam)) {
+      renderCourse(currentParam);
+    }
+    if (currentRoute === "browse") renderBrowse();
+  } else if (msg.type === "comment_created") {
+    if (currentRoute === "material" && String(msg.material_id) === String(currentParam)) {
+      loadComments(currentParam);
+    }
+  }
+}
+
+/* UTILS */
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+function humanSize(b) {
+  if (b < 1024) return b + " B";
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+  return (b / 1024 / 1024).toFixed(1) + " MB";
+}
+function timeAgo(iso) {
+  if (!iso) return "";
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  if (s < 604800) return `${Math.floor(s/86400)}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+/* AUTH */
+async function login() {
+  const body = new URLSearchParams();
+  body.append("username", document.getElementById("email").value);
+  body.append("password", document.getElementById("password").value);
+  const res = await fetch(API + "/api/auth/login", { method: "POST", body });
+  if (!res.ok) return toast("Login failed — check credentials", "error");
+  token = (await res.json()).access_token;
+  localStorage.setItem("token", token);
+  boot();
+}
+async function register() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  try {
+    await api("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name: email.split("@")[0], email, password }),
+    });
+    toast("Account created — signing you in", "success");
+    login();
+  } catch (e) { toast("Register failed: " + e.message, "error"); }
+}
+
+/* ROUTER */
+const ROUTES = {
+  "": renderForYou, "search": renderSearch, "browse": renderBrowse,
+  "course": renderCourse, "material": renderMaterial, "upload": renderUpload,
+  "stats": renderStats, "saved": renderSaved, "profile": renderProfile,
+  "leaderboard": renderLeaderboard,
+  "notes": renderMyNotes,
+  "groups": renderGroups,
+  "group": renderGroup,
+  "admin": renderAdmin,
+};
+function navigate() {
+  const hash = location.hash || "#/";
+  const parts = hash.slice(2).split("/");
+  const page = parts[0] || "";
+  const param = parts[1] || null;
+  currentRoute = page === "" ? "recs" : page;
+  currentParam = param;
+  document.querySelectorAll("[data-nav]").forEach(el => {
+    el.classList.toggle("active", el.dataset.nav === currentRoute);
+  });
+  const handler = ROUTES[page] || ROUTES[""];
+  handler(param);
+}
+window.addEventListener("hashchange", navigate);
+
+/* FOR YOU */
+async function renderForYou() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Recommended for you</h1>
+        <div class="hint">Personalized from your activity and similar students</div>
+      </div>
+      <button class="subtle" onclick="loadRecommendations(true)">↻ Refresh</button>
+    </div>
+    <div id="recs">${skeleton() + skeleton() + skeleton()}</div>
+  `;
+  await loadRecommendations(true);
+}
+async function loadRecommendations() {
+  const box = document.getElementById("recs");
+  if (!box) return;
+  try {
+    const recs = await api("/api/recommendations/me?limit=10");
+    await idbPut("recs", recs, "last");
+    renderRecs(recs, false);
+  } catch (e) {
+    const cached = await idbGet("recs", "last");
+    if (cached && cached.length) renderRecs(cached, true);
+    else box.innerHTML = emptyState("⚠", "Couldn't load recommendations", e.message);
+  }
+}
+function renderRecs(recs, fromCache) {
+  const box = document.getElementById("recs");
+  if (!box) return;
+  const banner = fromCache ? `<div class="notice warn">Offline — showing cached recommendations.</div>` : "";
+  if (!recs.length) {
+    box.innerHTML = banner + emptyState("◇", "No recommendations yet",
+      "Upload or rate a material and they'll start appearing here.");
+    return;
+  }
+  box.innerHTML = banner + recs.map(m => {
+    const reasons = `<div class="reasons">
+      <span class="reason">${escapeHtml(m.reason || "recommended")}</span>
+      ${m.score ? `<span class="reason score">${m.score.toFixed(3)}</span>` : ""}
+    </div>`;
+    return cardHTML(m, reasons, true);
+  }).join("");
+}
+
+/* SEARCH */
+function renderSearch() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Search materials</h1>
+        <div class="hint">Find notes, past papers, slides by keyword</div>
+      </div>
+    </div>
+    <div class="field">
+      <input id="q" placeholder="Search by title, description, or tag..." />
+    </div>
+    <div class="filter-bar">
+      <select id="fKind">
+        <option value="">All types</option>
+        <option value="notes">Notes</option>
+        <option value="past_paper">Past Paper</option>
+        <option value="slides">Slides</option>
+        <option value="video">Video</option>
+      </select>
+      <select id="fRating">
+        <option value="">Any rating</option>
+        <option value="3">3+ stars</option>
+        <option value="4">4+ stars</option>
+        <option value="4.5">4.5+ stars</option>
+      </select>
+      <select id="fDays">
+        <option value="">Any time</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <select id="fSort">
+        <option value="recent">Recent first</option>
+        <option value="rating">Highest rated</option>
+        <option value="popular">Most downloaded</option>
+      </select>
+    </div>
+    <div style="margin-bottom:20px">
+      <button onclick="doSearch()" style="width:100%">⌕ Search</button>
+    </div>
+    <div id="results"></div>
+  `;
+  document.getElementById("q").addEventListener("keydown", e => {
+    if (e.key === "Enter") doSearch();
+  });
+}
+async function doSearch() {
+  const box = document.getElementById("results");
+  box.innerHTML = skeleton() + skeleton();
+
+  const params = new URLSearchParams();
+  params.set("q", document.getElementById("q").value);
+  const k = document.getElementById("fKind").value;
+  const r = document.getElementById("fRating").value;
+  const d = document.getElementById("fDays").value;
+  const s = document.getElementById("fSort").value;
+  if (k) params.set("kind", k);
+  if (r) params.set("min_rating", r);
+  if (d) params.set("days", d);
+  if (s) params.set("sort", s);
+
+  try {
+    const items = await api("/api/materials/search?" + params.toString());
+    if (!items.length) {
+      box.innerHTML = emptyState("⌕", "No matches", "Try different keywords or filters.");
+      return;
+    }
+    box.innerHTML = items.map(m => cardHTML(m, "", true)).join("");
+    await idbPut("materials", items, "last-search");
+  } catch (e) {
+    const cached = await idbGet("materials", "last-search");
+    if (cached) {
+      box.innerHTML = `<div class="notice warn">Offline — showing last search results.</div>` +
+        cached.map(m => cardHTML(m, "", true)).join("");
+    } else {
+      box.innerHTML = emptyState("⚠", "Search failed", e.message);
+    }
+  }
+}
+
+/* BROWSE */
+async function renderBrowse() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Browse by course</h1>
+        <div class="hint">Pick a course to see all its materials</div>
+      </div>
+    </div>
+    <div id="courseGrid" class="course-grid">${skeleton() + skeleton() + skeleton()}</div>
+  `;
+  try {
+    const [courses, unis] = await Promise.all([
+      api("/api/courses"), api("/api/universities"),
+    ]);
+    const uniMap = Object.fromEntries(unis.map(u => [u.id, u.name]));
+    const grid = document.getElementById("courseGrid");
+    if (!courses.length) {
+      grid.innerHTML = emptyState("▤", "No courses yet", "Seed the database to add demo courses.");
+      return;
+    }
+    grid.innerHTML = courses.map(c => {
+      const enrolled = enrolledCourseIds.has(c.id);
+      return `
+      <a href="#/course/${c.id}" class="course-card">
+        <div class="course-code">${escapeHtml(c.code)} ${enrolled ? "✓" : ""}</div>
+        <div class="course-title">${escapeHtml(c.title)}</div>
+        <div class="course-meta">${escapeHtml(uniMap[c.university_id] || "University")}</div>
+      </a>`;
+    }).join("");
+  } catch (e) {
+    document.getElementById("courseGrid").innerHTML = emptyState("⚠", "Couldn't load courses", e.message);
+  }
+}
+
+/* COURSE */
+async function renderCourse(courseId) {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <a href="#/browse" style="color:var(--text-dim);font-size:13px">← All courses</a>
+        <h1 id="courseTitle">Loading…</h1>
+      </div>
+      <div id="enrollBtnHolder"></div>
+    </div>
+    <div id="courseMaterials">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const [courses, materials] = await Promise.all([
+      api("/api/courses"), api(`/api/courses/${courseId}/materials`),
+    ]);
+    const course = courses.find(c => String(c.id) === String(courseId));
+    document.getElementById("courseTitle").textContent =
+      course ? `${course.code} — ${course.title}` : "Course";
+
+    // Enroll button
+    if (course) {
+      const enrolled = enrolledCourseIds.has(course.id);
+      const holder = document.getElementById("enrollBtnHolder");
+      const btn = document.createElement("button");
+      btn.className = enrolled ? "subtle" : "";
+      btn.textContent = enrolled ? "✓ Enrolled" : "+ Enroll";
+      btn.onclick = () => toggleEnroll(course.id);
+      holder.appendChild(btn);
+    }
+
+    const box2 = document.getElementById("courseMaterials");
+    if (!materials.length) {
+      box2.innerHTML = emptyState("◇", "No materials yet",
+        "Be the first to upload something for this course.");
+      return;
+    }
+    box2.innerHTML = materials.map(m => cardHTML(m, "", true)).join("");
+  } catch (e) {
+    document.getElementById("courseMaterials").innerHTML =
+      emptyState("⚠", "Couldn't load course", e.message);
+  }
+}
+async function toggleEnroll(courseId) {
+  const enrolled = enrolledCourseIds.has(courseId);
+  try {
+    if (enrolled) {
+      await api(`/api/courses/${courseId}/enroll`, { method: "DELETE" });
+      enrolledCourseIds.delete(courseId);
+      toast("Unenrolled", "info", 1500);
+    } else {
+      await api(`/api/courses/${courseId}/enroll`, { method: "POST" });
+      enrolledCourseIds.add(courseId);
+      toast("Enrolled — recommendations will adapt", "success");
+    }
+    renderCourse(courseId);
+  } catch (e) { toast("Failed: " + e.message, "error"); }
+}
+
+/* MATERIAL DETAIL */
+async function renderMaterial(materialId) {
+  const box = document.getElementById("content");
+  box.innerHTML = skeleton() + skeleton();
+  try {
+    const m = await api(`/api/materials/${materialId}`);
+    materialCache.set(m.id, m);
+    const isPdf = (m.url || "").toLowerCase().endsWith(".pdf");
+    const bookmarked = bookmarkedIds.has(m.id);
+
+    box.innerHTML = `
+      <div class="page-head">
+        <div style="flex:1">
+          <a href="#/browse" style="color:var(--text-dim);font-size:13px">← Back</a>
+          <div class="detail-head">
+            <h1>${escapeHtml(m.title)}</h1>
+            <div class="detail-meta">
+              <span class="kind-badge ${(m.kind || "notes").replace("_","-")}">${(m.kind || "material").replace("_"," ")}</span>
+              <span>★ ${m.avg_rating || "unrated"}</span>
+              ${m.tags ? m.tags.split(",").slice(0,5).map(t => `<span class="tag">${escapeHtml(t.trim())}</span>`).join("") : ""}
+            </div>
+            ${m.description ? `<p style="color:var(--text-dim);font-size:14px;line-height:1.6">${escapeHtml(m.description.slice(0,400))}${m.description.length>400?"…":""}</p>` : ""}
+          </div>
+        </div>
+      </div>
+      ${isPdf ? `<div class="pdf-viewer">
+          <iframe src="${escapeHtml(m.url)}#toolbar=1&view=FitH" title="${escapeHtml(m.title)}"></iframe>
+        </div>` : m.url ? `<div class="pdf-viewer"><div class="pdf-fallback">
+            <div class="empty-icon">📄</div>
+            <div class="empty-title">Preview not available for this file type</div>
+            <div class="empty-hint" style="margin-bottom:16px">${escapeHtml(m.url.split("/").pop())}</div>
+            <a href="${escapeHtml(m.url)}" target="_blank" rel="noopener"><button>Open in new tab</button></a>
+        </div></div>` : ""}
+
+      <div class="card-actions" style="border-top:0;padding-top:0;margin-top:0">
+        <button class="bm-btn ${bookmarked ? "bookmarked" : ""}" id="bm-${m.id}" onclick="toggleBookmark(${m.id}, event)">
+          ${bookmarked ? "★ Saved" : "☆ Save"}
+        </button>
+        ${m.url ? `<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener" class="primary-link">↓ Download</a>` : ""}
+        <button onclick="logEvent(${m.id}, 'download')">✓ Mark done</button>
+        <button onclick="rate(${m.id})">★ Rate</button>
+        <button onclick="shareById(${m.id})">↗ Share</button>
+        <button onclick="flagMaterial(${m.id})" style="color:var(--red);border-color:rgba(248,113,113,.3)">⚑ Flag</button>
+      </div>
+
+      <div class="comments-section" style="margin-top:22px">
+        <h2>My notes <span style="color:var(--text-mute);font-weight:500;font-size:14px">(private)</span></h2>
+        <div id="notesBox">${skeleton()}</div>
+        <div class="comment-form">
+          <input id="notePage" type="number" placeholder="Page (optional)" style="max-width:140px;flex:0 0 auto" />
+          <textarea id="noteInput" placeholder="Write a private note..." rows="2"></textarea>
+          <button onclick="addNote(${m.id})">Save note</button>
+        </div>
+      </div>
+
+      <div class="comments-section">
+        <h2>Discussion <span id="commentCount" style="color:var(--text-mute);font-weight:500;font-size:14px"></span></h2>
+        <div id="commentsBox">${skeleton()}</div>
+        <div class="comment-form">
+          <textarea id="commentInput" placeholder="Ask a question or share a tip..." rows="3"></textarea>
+          <button onclick="postComment(${m.id})">Post</button>
+        </div>
+      </div>
+    `;
+    loadComments(m.id);
+    loadNotes(m.id);
+  } catch (e) {
+    box.innerHTML = emptyState("⚠", "Material not found", e.message);
+  }
+}
+
+/* COMMENTS */
+async function loadComments(materialId) {
+  const box = document.getElementById("commentsBox");
+  if (!box) return;
+  try {
+    const items = await api(`/api/materials/${materialId}/comments`);
+    const countEl = document.getElementById("commentCount");
+    if (countEl) countEl.textContent = items.length ? `(${items.length})` : "";
+    if (!items.length) {
+      box.innerHTML = `<p style="color:var(--text-mute);font-size:13.5px;padding:10px 0">No comments yet. Be the first.</p>`;
+      return;
+    }
+    box.innerHTML = items.map(c => `
+      <div class="comment">
+        <div class="comment-avatar">${escapeHtml((c.user.name || "?")[0].toUpperCase())}</div>
+        <div class="comment-body">
+          <div class="comment-head">
+            <span class="comment-name">${escapeHtml(c.user.name)}</span>
+            <span class="comment-time">${timeAgo(c.created_at)}</span>
+          </div>
+          <div class="comment-text">${escapeHtml(c.body)}</div>
+        </div>
+      </div>
+    `).join("");
+  } catch (e) {
+    box.innerHTML = `<p style="color:var(--text-mute);font-size:13px">Couldn't load comments.</p>`;
+  }
+}
+async function postComment(materialId) {
+  const input = document.getElementById("commentInput");
+  const body = input.value.trim();
+  if (!body) return toast("Write something first", "error");
+  try {
+    await api(`/api/materials/${materialId}/comments`, {
+      method: "POST", body: JSON.stringify({ body }),
+    });
+    input.value = "";
+    loadComments(materialId);
+  } catch (e) { toast("Comment failed: " + e.message, "error"); }
+}
+
+/* NOTES */
+async function loadNotes(materialId) {
+  const box = document.getElementById("notesBox");
+  if (!box) return;
+  try {
+    const notes = await api(`/api/materials/${materialId}/notes`);
+    if (!notes.length) {
+      box.innerHTML = `<p style="color:var(--text-mute);font-size:13.5px;padding:8px 0">No notes yet. Only you can see these.</p>`;
+      return;
+    }
+    box.innerHTML = notes.map(n => `
+      <div class="comment">
+        <div class="comment-avatar" style="background:var(--blue);color:#fff">✎</div>
+        <div class="comment-body">
+          <div class="comment-head">
+            <span class="comment-name">${n.page ? "Page " + n.page : "Note"}</span>
+            <span class="comment-time">${timeAgo(n.updated_at)}</span>
+          </div>
+          <div class="comment-text">${escapeHtml(n.body)}</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="subtle" style="font-size:11px;padding:4px 8px" onclick="editNote(${n.id}, ${materialId})">Edit</button>
+            <button class="subtle" style="font-size:11px;padding:4px 8px" onclick="deleteNote(${n.id}, ${materialId})">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  } catch { box.innerHTML = `<p style="color:var(--text-mute);font-size:13px">Couldn't load notes.</p>`; }
+}
+async function addNote(materialId) {
+  const body = document.getElementById("noteInput").value.trim();
+  const page = document.getElementById("notePage").value;
+  if (!body) return toast("Write something", "error");
+  try {
+    await api(`/api/materials/${materialId}/notes`, {
+      method: "POST",
+      body: JSON.stringify({ body, page: page ? parseInt(page, 10) : null }),
+    });
+    document.getElementById("noteInput").value = "";
+    document.getElementById("notePage").value = "";
+    loadNotes(materialId);
+    toast("Note saved", "success", 1500);
+  } catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function editNote(noteId, materialId) {
+  const body = prompt("Edit note:");
+  if (!body) return;
+  try {
+    await api(`/api/notes/${noteId}`, { method: "PATCH", body: JSON.stringify({ body }) });
+    loadNotes(materialId);
+  } catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function deleteNote(noteId, materialId) {
+  if (!confirm("Delete this note?")) return;
+  try {
+    await api(`/api/notes/${noteId}`, { method: "DELETE" });
+    loadNotes(materialId);
+  } catch (e) { toast("Failed: " + e.message, "error"); }
+}
+
+/* SAVED */
+async function renderSaved() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Saved library</h1>
+        <div class="hint">Materials you've bookmarked for later</div>
+      </div>
+    </div>
+    <div id="savedList">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const bms = await api("/api/bookmarks");
+    const list = document.getElementById("savedList");
+    if (!bms.length) {
+      list.innerHTML = emptyState("☆", "No saved materials yet",
+        "Tap the star on any material to save it here for quick access.");
+      return;
+    }
+    list.innerHTML = bms.map(b => cardHTML(b.material, "", true)).join("");
+  } catch (e) {
+    document.getElementById("savedList").innerHTML = emptyState("⚠", "Couldn't load saved", e.message);
+  }
+}
+
+/* MY NOTES PAGE */
+async function renderMyNotes() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div><h1>My notes</h1><div class="hint">Private notes on materials you've studied</div></div>
+    </div>
+    <div id="myNotesBox">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const notes = await api("/api/me/notes");
+    const b = document.getElementById("myNotesBox");
+    if (!notes.length) {
+      b.innerHTML = emptyState("✎", "No notes yet",
+        "Open any material and write a note to see it here.");
+      return;
+    }
+    const byMat = {};
+    for (const n of notes) {
+      if (!byMat[n.material_id]) byMat[n.material_id] = [];
+      byMat[n.material_id].push(n);
+    }
+    let html = "";
+    for (const [matId, items] of Object.entries(byMat)) {
+      let mat = materialCache.get(parseInt(matId, 10));
+      if (!mat) {
+        try { mat = await api(`/api/materials/${matId}`); materialCache.set(mat.id, mat); } catch {}
+      }
+      html += `<div class="card">
+        <div class="card-top">
+          <div class="card-title"><a href="#/material/${matId}" style="color:var(--accent)">${escapeHtml(mat ? mat.title : "Material #" + matId)}</a></div>
+        </div>
+        ${items.map(n => `
+          <div style="padding:10px 0;border-top:1px solid var(--border)">
+            ${n.page ? `<span class="tag" style="margin-right:6px">Page ${n.page}</span>` : ""}
+            <span style="color:var(--text-dim);font-size:13.5px;white-space:pre-wrap">${escapeHtml(n.body)}</span>
+            <div style="color:var(--text-mute);font-size:11px;margin-top:4px">${timeAgo(n.updated_at)}</div>
+          </div>`).join("")}
+      </div>`;
+    }
+    b.innerHTML = html;
+  } catch (e) {
+    document.getElementById("myNotesBox").innerHTML = emptyState("⚠", "Couldn't load notes", e.message);
+  }
+}
+
+/* GROUPS */
+async function renderGroups() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div><h1>Study groups</h1><div class="hint">Learn together, share materials</div></div>
+      <button onclick="showCreateGroup()">+ New group</button>
+    </div>
+    <div id="groupBox">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const groups = await api("/api/groups");
+    const b = document.getElementById("groupBox");
+    if (!groups.length) {
+      b.innerHTML = emptyState("👥", "No groups yet", "Create one and invite your classmates.");
+      return;
+    }
+    b.innerHTML = `<div class="course-grid">` + groups.map(g => `
+      <a href="#/group/${g.id}" class="course-card">
+        <div class="course-code">${g.is_member ? "✓ Member" : "Join →"}</div>
+        <div class="course-title">${escapeHtml(g.name)}</div>
+        <div class="course-meta">${g.member_count} member${g.member_count === 1 ? "" : "s"}</div>
+      </a>
+    `).join("") + `</div>`;
+  } catch (e) {
+    document.getElementById("groupBox").innerHTML = emptyState("⚠", "Couldn't load groups", e.message);
+  }
+}
+function showCreateGroup() {
+  const name = prompt("Group name:");
+  if (!name) return;
+  const description = prompt("Short description (optional):") || "";
+  api("/api/groups", { method: "POST", body: JSON.stringify({ name, description }) })
+    .then(g => { toast("Group created", "success"); location.hash = `#/group/${g.id}`; })
+    .catch(e => toast("Failed: " + e.message, "error"));
+}
+async function renderGroup(groupId) {
+  const box = document.getElementById("content");
+  box.innerHTML = skeleton() + skeleton();
+  try {
+    const g = await api(`/api/groups/${groupId}`);
+    const members = await api(`/api/groups/${groupId}/members`);
+    const shares = await api(`/api/groups/${groupId}/shares`);
+
+    box.innerHTML = `
+      <div class="page-head">
+        <div>
+          <a href="#/groups" style="color:var(--text-dim);font-size:13px">← All groups</a>
+          <h1>${escapeHtml(g.name)}</h1>
+          <div class="hint">${escapeHtml(g.description || "")} · ${g.member_count} member${g.member_count === 1 ? "" : "s"}</div>
+        </div>
+        ${g.is_member
+          ? `<button class="subtle" onclick="leaveGroup(${g.id})">Leave</button>`
+          : `<button onclick="joinGroup(${g.id})">Join group</button>`}
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="n">${g.member_count}</div><div class="l">Members</div></div>
+        <div class="stat"><div class="n blue">${shares.length}</div><div class="l">Shared</div></div>
+      </div>
+
+      ${g.is_member ? `
+        <div class="card">
+          <h3 style="margin-bottom:10px">Share a material</h3>
+          <div class="comment-form">
+            <input id="shareMatId" type="number" placeholder="Material ID" style="max-width:140px;flex:0 0 auto" />
+            <input id="shareNote" placeholder="Why is this useful?" />
+            <button onclick="shareToGroup(${g.id})">Share</button>
+          </div>
+          <p style="color:var(--text-mute);font-size:12px;margin-top:8px">Tip: the material ID is in the URL after <b>#/material/</b></p>
+        </div>
+      ` : ""}
+
+      <h2 style="font-size:17px;font-weight:700;margin:22px 0 12px">Shared materials</h2>
+      <div id="groupShares">${shares.length ? shares.map(s => cardHTML(s.material, s.note ? `<div style="color:var(--text-dim);font-size:13px;margin-bottom:8px">“${escapeHtml(s.note)}”</div>` : "", true)).join("") : emptyState("◇", "Nothing shared yet", "Be the first to share a useful material.")}</div>
+
+      <h2 style="font-size:17px;font-weight:700;margin:22px 0 12px">Members</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${members.map(m => `<span class="tag" style="padding:6px 12px">${escapeHtml(m.user.name)}</span>`).join("")}
+      </div>
+    `;
+  } catch (e) {
+    box.innerHTML = emptyState("⚠", "Couldn't load group", e.message);
+  }
+}
+async function joinGroup(groupId) {
+  try { await api(`/api/groups/${groupId}/join`, { method: "POST" }); toast("Joined!", "success"); renderGroup(groupId); }
+  catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function leaveGroup(groupId) {
+  if (!confirm("Leave this group?")) return;
+  try { await api(`/api/groups/${groupId}/leave`, { method: "DELETE" }); toast("Left group", "info"); renderGroup(groupId); }
+  catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function shareToGroup(groupId) {
+  const mid = parseInt(document.getElementById("shareMatId").value, 10);
+  const note = document.getElementById("shareNote").value;
+  if (!mid) return toast("Material ID required", "error");
+  try {
+    await api(`/api/groups/${groupId}/share`, {
+      method: "POST", body: JSON.stringify({ material_id: mid, note }),
+    });
+    toast("Shared with group", "success");
+    renderGroup(groupId);
+  } catch (e) { toast("Failed: " + e.message, "error"); }
+}
+
+/* PROFILE */
+async function renderProfile() {
+  const box = document.getElementById("content");
+  box.innerHTML = skeleton() + skeleton();
+  try {
+    const p = await api("/api/me/profile");
+    box.innerHTML = `
+      <div class="page-head">
+        <div>
+          <h1>${escapeHtml(p.user.name)}</h1>
+          <div class="hint">${escapeHtml(p.user.email)}</div>
+        </div>
+      </div>
+      <div class="profile-hero">
+        <div class="streak-block">
+          <div class="streak-flame">🔥</div>
+          <div class="streak-num">${p.streak_current}</div>
+          <div class="streak-label">day streak</div>
+        </div>
+        <div class="streak-secondary">
+          <div class="streak-longest">
+            <strong>${p.streak_longest}</strong>
+            <span>Longest streak</span>
+          </div>
+          <div class="streak-longest">
+            <strong>${p.joined_days_ago}</strong>
+            <span>Days on StudyHub</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="n blue">${p.total_bookmarks}</div><div class="l">Saved</div></div>
+        <div class="stat"><div class="n amber">${p.total_downloads}</div><div class="l">Downloads</div></div>
+        <div class="stat"><div class="n purple">${p.total_ratings}</div><div class="l">Ratings</div></div>
+        <div class="stat"><div class="n">${p.total_uploads}</div><div class="l">Uploads</div></div>
+        <div class="stat"><div class="n">${p.total_notes || 0}</div><div class="l">Notes</div></div>
+      </div>
+    `;
+  } catch (e) {
+    box.innerHTML = emptyState("⚠", "Couldn't load profile", e.message);
+  }
+}
+
+/* LEADERBOARD */
+async function renderLeaderboard() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Leaderboard</h1>
+        <div class="hint">Top contributors on StudyHub</div>
+      </div>
+    </div>
+    <div id="lbBox">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const rows = await api("/api/leaderboard?limit=20");
+    const container = document.getElementById("lbBox");
+    if (!rows.length) {
+      container.innerHTML = emptyState("🏆", "No rankings yet",
+        "Upload materials and get downloads to appear here.");
+      return;
+    }
+    container.innerHTML = `<div class="leaderboard">` + rows.map((r, i) => {
+      const rank = i + 1;
+      const rankClass = rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "";
+      const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
+      return `<div class="lb-row">
+        <div class="lb-rank ${rankClass}">${medal}</div>
+        <div class="lb-name">${escapeHtml(r.name)}</div>
+        <div class="lb-cell hide-mobile" title="Uploads">${r.uploads} ↑</div>
+        <div class="lb-cell hide-mobile" title="Downloads">${r.downloads} ↓</div>
+        <div class="lb-cell hide-mobile" title="Avg rating">★ ${r.avg_rating}</div>
+        <div class="lb-score">${r.score}</div>
+      </div>`;
+    }).join("") + `</div>`;
+  } catch (e) {
+    document.getElementById("lbBox").innerHTML = emptyState("⚠", "Couldn't load leaderboard", e.message);
+  }
+}
+
+/* ADMIN / MODERATION */
+async function renderAdmin() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div><h1>Moderation</h1><div class="hint">Review flagged materials</div></div>
+      <button class="subtle" onclick="renderAdmin()">↻ Refresh</button>
+    </div>
+    <div id="flagBox">${skeleton() + skeleton()}</div>
+  `;
+  try {
+    const flags = await api("/api/admin/flags?status=pending");
+    const b = document.getElementById("flagBox");
+    if (!flags.length) {
+      b.innerHTML = emptyState("✓", "No pending flags", "Everything looks clean.");
+      loadFlagBadge();
+      return;
+    }
+    b.innerHTML = flags.map(f => `
+      <div class="card">
+        <div class="card-top">
+          <div class="card-title">${escapeHtml(f.material.title)}</div>
+          <span class="kind-badge video">${escapeHtml(f.reason)}</span>
+        </div>
+        <div class="card-meta">Reported ${timeAgo(f.created_at)}</div>
+        ${f.details ? `<p style="color:var(--text-dim);font-size:13px">“${escapeHtml(f.details)}”</p>` : ""}
+        <div class="card-actions">
+          <a href="#/material/${f.material_id}" class="primary-link">View</a>
+          <button onclick="dismissFlag(${f.id})">Dismiss</button>
+          <button onclick="removeViaFlag(${f.id})" style="color:var(--red);border-color:rgba(248,113,113,.3)">Hide material</button>
+        </div>
+      </div>
+    `).join("");
+    loadFlagBadge();
+  } catch (e) {
+    document.getElementById("flagBox").innerHTML = emptyState("⚠", "Couldn't load flags", e.message);
+  }
+}
+async function loadFlagBadge() {
+  try {
+    const flags = await api("/api/admin/flags?status=pending");
+    const badge = document.getElementById("flagBadge");
+    if (!badge) return;
+    if (flags.length > 0) { badge.textContent = flags.length; badge.style.display = "inline-block"; }
+    else badge.style.display = "none";
+  } catch {}
+}
+async function dismissFlag(flagId) {
+  try { await api(`/api/admin/flags/${flagId}/dismiss`, { method: "POST" }); toast("Dismissed", "success"); renderAdmin(); }
+  catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function removeViaFlag(flagId) {
+  if (!confirm("Hide this material from all users?")) return;
+  try { await api(`/api/admin/flags/${flagId}/remove-material`, { method: "POST" }); toast("Material hidden", "success"); renderAdmin(); }
+  catch (e) { toast("Failed: " + e.message, "error"); }
+}
+async function flagMaterial(materialId) {
+  const reason = prompt("Reason (spam / inappropriate / copyright / other):");
+  if (!reason) return;
+  const details = prompt("More details (optional):") || "";
+  try { await api(`/api/materials/${materialId}/flag`, { method: "POST", body: JSON.stringify({ reason, details }) }); toast("Flag submitted to admins", "success"); }
+  catch (e) { toast("Failed: " + e.message, "error"); }
+}
+
+/* UPLOAD */
+async function renderUpload() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div>
+        <h1>Upload study material</h1>
+        <div class="hint">PDFs get auto-tagged on the server</div>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="field"><label>Title *</label><input id="mTitle" placeholder="e.g. CSC301 Past Paper 2023" /></div>
+      <div class="field"><label>Course *</label><select id="mCourse"></select></div>
+      <div class="field"><label>Type</label>
+        <select id="mKind">
+          <option value="notes">Notes</option>
+          <option value="past_paper">Past Paper</option>
+          <option value="slides">Slides</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+      <div class="field"><label>Tags (comma separated)</label><input id="mTags" placeholder="algorithms, graphs, BFS" /></div>
+      <div class="field"><label>Description</label><textarea id="mDesc" placeholder="Short description..."></textarea></div>
+      <div class="field">
+        <label>File *</label>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('mFile').click()">
+          <div class="drop-zone-icon">↑</div>
+          <div class="drop-zone-title">Click to choose or drag a file here</div>
+          <div class="drop-zone-hint">PDF, DOC, PPT, TXT, image · max 25 MB</div>
+          <input id="mFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg" />
+        </div>
+        <div class="file-selected" id="fileSelected">
+          <span>📎</span><span class="name" id="fileName"></span><span class="size" id="fileSize"></span>
+        </div>
+      </div>
+      <button id="uploadBtn" onclick="upload()" style="width:100%;margin-top:8px">↑ Upload material</button>
+    </div>
+  `;
+  try {
+    const courses = await api("/api/courses");
+    document.getElementById("mCourse").innerHTML = courses.map(c =>
+      `<option value="${c.id}">${escapeHtml(c.code)} — ${escapeHtml(c.title)}</option>`
+    ).join("");
+  } catch {}
+  setupDropZone();
+}
+function setupDropZone() {
+  const zone = document.getElementById("dropZone");
+  const input = document.getElementById("mFile");
+  const selected = document.getElementById("fileSelected");
+  const nameEl = document.getElementById("fileName");
+  const sizeEl = document.getElementById("fileSize");
+  function showFile(file) {
+    if (!file) return;
+    nameEl.textContent = file.name;
+    sizeEl.textContent = humanSize(file.size);
+    selected.classList.add("show");
+  }
+  input.addEventListener("change", () => showFile(input.files[0]));
+  ["dragenter","dragover"].forEach(ev =>
+    zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add("dragover"); }));
+  ["dragleave","drop"].forEach(ev =>
+    zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove("dragover"); }));
+  zone.addEventListener("drop", e => {
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      showFile(file);
+    }
+  });
+}
+async function upload() {
+  const btn = document.getElementById("uploadBtn");
+  const title = document.getElementById("mTitle").value.trim();
+  const courseId = parseInt(document.getElementById("mCourse").value, 10);
+  const kind = document.getElementById("mKind").value;
+  const tags = document.getElementById("mTags").value.trim();
+  const description = document.getElementById("mDesc").value.trim();
+  const fileInput = document.getElementById("mFile");
+  const file = fileInput.files[0];
+  if (!title) return toast("Title is required", "error");
+  if (!file) return toast("Please choose a file", "error");
+
+  const fd = new FormData();
+  fd.append("title", title);
+  fd.append("course_id", courseId);
+  fd.append("kind", kind);
+  fd.append("tags", tags);
+  fd.append("description", description);
+  fd.append("file", file);
+
+  btn.disabled = true; btn.innerHTML = `◌ Uploading...`;
+  try {
+    const res = await fetch(API + "/api/materials/upload", {
+      method: "POST",
+      headers: token ? { Authorization: "Bearer " + token } : {},
+      body: fd,
+    });
+    if (!res.ok) {
+      let msg = res.statusText;
+      try { msg = (await res.json()).detail || msg; } catch {}
+      throw new Error(msg);
+    }
+    toast("Uploaded! Recommender index refreshed.", "success");
+    location.hash = "#/";
+  } catch (e) {
+    toast("Upload failed: " + e.message, "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = `↑ Upload material`;
+  }
+}
+
+/* STATS */
+async function renderStats() {
+  const box = document.getElementById("content");
+  box.innerHTML = `
+    <div class="page-head">
+      <div><h1>Platform stats</h1><div class="hint">Live metrics from the recommender</div></div>
+      <button class="subtle" onclick="renderStats()">↻ Refresh</button>
+    </div>
+    <div id="statsBox"></div>
+  `;
+  try {
+    const s = await api("/api/admin/stats");
+    const actions = Object.entries(s.top_actions || {})
+      .map(([k, v]) => `<div class="stat"><div class="n purple">${v}</div><div class="l">${escapeHtml(k)}</div></div>`)
+      .join("");
+    document.getElementById("statsBox").innerHTML = `
+      <div class="stat-grid">
+        <div class="stat"><div class="n">${s.users}</div><div class="l">Users</div></div>
+        <div class="stat"><div class="n blue">${s.materials}</div><div class="l">Materials</div></div>
+        <div class="stat"><div class="n amber">${s.events}</div><div class="l">Interactions</div></div>
+        <div class="stat"><div class="n purple">${s.bookmarks}</div><div class="l">Bookmarks</div></div>
+        <div class="stat"><div class="n">${s.comments}</div><div class="l">Comments</div></div>
+        <div class="stat"><div class="n">${s.notes || 0}</div><div class="l">Notes</div></div>
+        <div class="stat"><div class="n">${s.groups || 0}</div><div class="l">Groups</div></div>
+        <div class="stat"><div class="n ${s.pending_flags > 0 ? "red" : ""}">${s.pending_flags || 0}</div><div class="l">Pending flags</div></div>
+        <div class="stat"><div class="n red">${s.live_connections ?? 0}</div><div class="l">Live now</div></div>
+        <div class="stat"><div class="n">${s.using_embeddings ? "ON" : "OFF"}</div><div class="l">Embeddings</div></div>
+        ${actions}
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById("statsBox").innerHTML = emptyState("⚠", "Stats unavailable", e.message);
+  }
+}
+
+/* ENGAGEMENT */
+async function logEvent(materialId, action) {
+  try {
+    await api(`/api/materials/${materialId}/event?action=${action}`, { method: "POST" });
+    toast("Marked as " + action, "success", 1800);
+  } catch {}
+}
+async function rate(materialId) {
+  const raw = prompt("Rate this material 1–5:");
+  if (!raw) return;
+  const score = parseInt(raw, 10);
+  if (!(score >= 1 && score <= 5)) return toast("Enter a number from 1 to 5", "error");
+  try {
+    await api(`/api/materials/${materialId}/rate`, {
+      method: "POST", body: JSON.stringify({ score }),
+    });
+    toast("Rated " + score + "/5 — recommendations updated", "success");
+    if (currentRoute === "recs") loadRecommendations(true);
+    if (currentRoute === "material" && String(currentParam) === String(materialId)) {
+      renderMaterial(materialId);
+    }
+  } catch (e) { toast("Rating failed: " + e.message, "error"); }
+}
+async function shareById(materialId) {
+  let m = materialCache.get(materialId);
+  if (!m) {
+    try { m = await api(`/api/materials/${materialId}`); materialCache.set(materialId, m); }
+    catch { m = { title: "Study material", description: "" }; }
+  }
+  const url = location.origin + "/material/" + materialId;
+  const shareData = { title: m.title || "Study material", text: m.description || "", url };
+  if (navigator.share) { try { await navigator.share(shareData); return; } catch {} }
+  try {
+    await navigator.clipboard.writeText(`${shareData.title} — ${url}`);
+    toast("Link copied to clipboard", "success");
+  } catch { prompt("Copy this link:", url); }
+}
+
+/* BOOKMARKS */
+async function toggleBookmark(materialId, event) {
+  if (event) event.stopPropagation();
+  const isBookmarked = bookmarkedIds.has(materialId);
+  try {
+    if (isBookmarked) {
+      await api(`/api/materials/${materialId}/bookmark`, { method: "DELETE" });
+      bookmarkedIds.delete(materialId);
+    } else {
+      await api(`/api/materials/${materialId}/bookmark`, { method: "POST" });
+      bookmarkedIds.add(materialId);
+    }
+    await idbPut("bookmarks", [...bookmarkedIds], "ids");
+    updateSavedBadge();
+    document.querySelectorAll(`#bm-${materialId}`).forEach(btn => {
+      const now = bookmarkedIds.has(materialId);
+      btn.classList.toggle("bookmarked", now);
+      btn.textContent = now ? "★ Saved" : "☆ Save";
+    });
+    toast(bookmarkedIds.has(materialId) ? "Saved to your library" : "Removed",
+          bookmarkedIds.has(materialId) ? "success" : "info", 1500);
+    if (currentRoute === "saved" && !bookmarkedIds.has(materialId)) {
+      setTimeout(renderSaved, 300);
+    }
+  } catch (e) { toast("Bookmark failed: " + e.message, "error"); }
+}
+function updateSavedBadge() {
+  const badge = document.getElementById("savedBadge");
+  if (!badge) return;
+  const n = bookmarkedIds.size;
+  if (n > 0) { badge.textContent = n; badge.style.display = "inline-block"; }
+  else badge.style.display = "none";
+}
+async function loadBookmarks() {
+  try {
+    const bms = await api("/api/bookmarks");
+    bookmarkedIds = new Set(bms.map(b => b.material_id));
+    await idbPut("bookmarks", [...bookmarkedIds], "ids");
+  } catch {
+    const cached = await idbGet("bookmarks", "ids");
+    if (cached) bookmarkedIds = new Set(cached);
+  }
+  updateSavedBadge();
+}
+async function loadEnrollments() {
+  try {
+    const list = await api("/api/me/enrollments");
+    enrolledCourseIds = new Set(list.map(e => e.course_id));
+  } catch {}
+}
+
+/* NOTIFICATIONS */
+async function loadNotifications() {
+  try {
+    notifCache = await api("/api/notifications?limit=30");
+    unreadCount = notifCache.filter(n => !n.read).length;
+    renderNotifBadges();
+    if (document.getElementById("notifDrawer").classList.contains("open")) {
+      renderNotifList();
+    }
+  } catch {}
+}
+function renderNotifBadges() {
+  const btn = document.getElementById("notifBtnMobile");
+  if (!btn) return;
+  if (unreadCount > 0) {
+    btn.style.position = "relative";
+    let badge = btn.querySelector(".notif-badge-mini");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "notif-badge-mini";
+      badge.style.cssText = "position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;";
+      btn.appendChild(badge);
+    }
+    badge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+  } else {
+    const badge = btn.querySelector(".notif-badge-mini");
+    if (badge) badge.remove();
+  }
+}
+function renderNotifList() {
+  const body = document.getElementById("notifBody");
+  if (!notifCache.length) {
+    body.innerHTML = emptyState("🔔", "All caught up", "You'll see notifications here.");
+    return;
+  }
+  const icons = { new_material: "📚", comment: "💬", info: "i" };
+  body.innerHTML = notifCache.map(n => `
+    <div class="notif-item ${n.read ? "" : "unread"}" onclick="openNotification(${n.id}, ${n.material_id || 0})">
+      <div class="notif-icon ${n.kind}">${icons[n.kind] || "•"}</div>
+      <div class="notif-content">
+        <div class="notif-title">${escapeHtml(n.title)}</div>
+        ${n.body ? `<div class="notif-text">${escapeHtml(n.body)}</div>` : ""}
+        <div class="notif-time">${timeAgo(n.created_at)}</div>
+      </div>
+    </div>
+  `).join("");
+}
+function openNotifDrawer() {
+  document.getElementById("notifDrawer").classList.add("open");
+  document.getElementById("notifBackdrop").classList.add("open");
+  loadNotifications().then(renderNotifList);
+}
+function closeNotifDrawer() {
+  document.getElementById("notifDrawer").classList.remove("open");
+  document.getElementById("notifBackdrop").classList.remove("open");
+}
+async function markAllRead() {
+  try {
+    await api("/api/notifications/read-all", { method: "POST" });
+    notifCache = notifCache.map(n => ({ ...n, read: true }));
+    unreadCount = 0;
+    renderNotifBadges(); renderNotifList();
+    toast("All notifications marked read", "success", 1500);
+  } catch {}
+}
+async function openNotification(notifId, materialId) {
+  try { await api(`/api/notifications/${notifId}/read`, { method: "POST" }); } catch {}
+  const n = notifCache.find(x => x.id === notifId);
+  if (n) n.read = true;
+  unreadCount = Math.max(0, unreadCount - 1);
+  renderNotifBadges(); renderNotifList();
+  closeNotifDrawer();
+  if (materialId) location.hash = `#/material/${materialId}`;
+}
+
+/* TIMER */
+const TIMER = { workMin: 25, breakMin: 5, remaining: 25 * 60, mode: "work", running: false, intervalId: null };
+function formatTime(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, "0");
+  const s = (sec % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+function openTimer() {
+  document.getElementById("timerWidget").classList.remove("hidden");
+  restoreTimer(); updateTimerUI();
+}
+function closeTimer() {
+  pauseTimer();
+  document.getElementById("timerWidget").classList.add("hidden");
+  localStorage.setItem("timerClosed", "1");
+}
+function restoreTimer() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("timerState") || "null");
+    if (saved) {
+      TIMER.mode = saved.mode || "work";
+      TIMER.remaining = saved.remaining ?? 25 * 60;
+      if (saved.running) {
+        const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
+        TIMER.remaining = Math.max(0, TIMER.remaining - elapsed);
+      }
+    }
+  } catch {}
+}
+function saveTimer() {
+  localStorage.setItem("timerState", JSON.stringify({
+    mode: TIMER.mode, remaining: TIMER.remaining,
+    running: TIMER.running, savedAt: Date.now(),
+  }));
+}
+function toggleTimer() { if (TIMER.running) pauseTimer(); else startTimer(); }
+function startTimer() {
+  if (TIMER.running) return;
+  TIMER.running = true; updateTimerUI();
+  TIMER.intervalId = setInterval(() => {
+    TIMER.remaining -= 1;
+    if (TIMER.remaining <= 0) completeTimer();
+    updateTimerUI();
+  }, 1000);
+  saveTimer();
+}
+function pauseTimer() {
+  TIMER.running = false;
+  if (TIMER.intervalId) clearInterval(TIMER.intervalId);
+  TIMER.intervalId = null;
+  updateTimerUI(); saveTimer();
+}
+async function completeTimer() {
+  pauseTimer();
+  if (TIMER.mode === "work") {
+    toast("Study session complete! Time for a break.", "success", 5000);
+    try { await api("/api/me/study-session", { method: "POST", body: JSON.stringify({ minutes: TIMER.workMin }) }); } catch {}
+    TIMER.mode = "break"; TIMER.remaining = TIMER.breakMin * 60;
+  } else {
+    toast("Break's over — back to it!", "info", 5000);
+    TIMER.mode = "work"; TIMER.remaining = TIMER.workMin * 60;
+  }
+  updateTimerUI(); saveTimer();
+}
+function updateTimerUI() {
+  const widget = document.getElementById("timerWidget");
+  if (!widget) return;
+  const time = document.getElementById("timerTime");
+  const label = document.getElementById("timerLabel");
+  const icon = document.getElementById("timerIcon");
+  const toggle = document.getElementById("timerToggle");
+  if (time) time.textContent = formatTime(TIMER.remaining);
+  if (label) label.textContent = TIMER.mode === "work" ? "Study session" : "Break";
+  if (icon) icon.textContent = TIMER.mode === "work" ? "⏱" : "☕";
+  if (toggle) toggle.textContent = TIMER.running ? "Pause" : "Start";
+  widget.classList.toggle("running", TIMER.running);
+  widget.classList.toggle("break", TIMER.mode === "break");
+}
+
+/* PWA */
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!localStorage.getItem("installDismissed")) {
+    document.getElementById("installBanner").classList.remove("hidden");
+  }
+});
+async function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === "accepted") toast("Installed! Find StudyHub on your home screen.", "success");
+  deferredInstallPrompt = null;
+  document.getElementById("installBanner").classList.add("hidden");
+}
+function dismissInstall() {
+  localStorage.setItem("installDismissed", "1");
+  document.getElementById("installBanner").classList.add("hidden");
+}
+
+/* RENDER HELPERS */
+function cardHTML(m, extraReasons = "", clickable = false) {
+  materialCache.set(m.id, m);
+  const kindClass = (m.kind || "notes").replace("_", "-");
+  const kindLabel = (m.kind || "material").replace("_", " ");
+  const bookmarked = bookmarkedIds.has(m.id);
+  const tags = m.tags
+    ? `<div class="card-tags">${m.tags.split(",").slice(0, 6)
+        .map(t => `<span class="tag">${escapeHtml(t.trim())}</span>`).join("")}</div>` : "";
+  const desc = m.description
+    ? `<div class="card-desc">${escapeHtml(m.description.slice(0, 180))}${m.description.length > 180 ? "…" : ""}</div>` : "";
+
+  return `<article class="card${clickable ? " clickable" : ""}"
+    ${clickable ? `onclick="if(event.target.tagName!=='A'&&event.target.tagName!=='BUTTON'&&!event.target.closest('.card-actions'))location.hash='#/material/${m.id}'"` : ""}>
+    <div class="card-top">
+      <div class="card-title">${escapeHtml(m.title)}</div>
+      <span class="kind-badge ${kindClass}">${escapeHtml(kindLabel)}</span>
+    </div>
+    <div class="card-meta">★ ${m.avg_rating || "unrated"}</div>
+    ${desc}${tags}${extraReasons}
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <a href="#/material/${m.id}" class="primary-link">Open</a>
+      <button class="bm-btn ${bookmarked ? "bookmarked" : ""}" id="bm-${m.id}" onclick="toggleBookmark(${m.id}, event)">
+        ${bookmarked ? "★ Saved" : "☆ Save"}
+      </button>
+      <button onclick="logEvent(${m.id}, 'download')">✓ Done</button>
+      <button onclick="rate(${m.id})">★ Rate</button>
+      <button onclick="shareById(${m.id})">↗ Share</button>
+    </div>
+  </article>`;
+}
+function skeleton() {
+  return `<div class="skeleton">
+    <div class="skel-line w-60"></div>
+    <div class="skel-line w-80"></div>
+    <div class="skel-line w-40"></div>
+  </div>`;
+}
+function emptyState(icon, title, hint) {
+  return `<div class="empty">
+    <div class="empty-icon">${icon}</div>
+    <div class="empty-title">${escapeHtml(title)}</div>
+    <div class="empty-hint">${escapeHtml(hint)}</div>
+  </div>`;
+}
+
+/* BOOT */
+async function boot() {
+  if (!token) { renderConnPills(); return; }
+  try {
+    currentUser = await api("/api/auth/me");
+    document.getElementById("authView").classList.add("hidden");
+    document.getElementById("appShell").classList.remove("hidden");
+
+    const chip = document.querySelector(".user-chip");
+    if (chip) {
+      chip.querySelector(".user-avatar").textContent = (currentUser.name || "?")[0].toUpperCase();
+      chip.querySelector(".user-name").textContent = currentUser.name;
+    }
+
+    if (currentUser.is_admin) {
+      document.getElementById("adminNavItem").style.display = "flex";
+      loadFlagBadge();
+    }
+
+    await loadBookmarks();
+    await loadEnrollments();
+    renderConnPills();
+    connectWS();
+    navigate();
+
+    touchVisit().then(loadStreakBadge);
+    loadStreakBadge();
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+
+    if (!localStorage.getItem("timerClosed")) openTimer();
+
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try { ws.send("ping"); } catch {}
+      }
+    }, 25000);
+  } catch {
+    token = null;
+    localStorage.removeItem("token");
+    renderConnPills();
+  }
+}
+async function loadStreakBadge() {
+  try {
+    const p = await api("/api/me/profile");
+    const row = document.getElementById("streakBadgeRow");
+    if (row && p.streak_current > 0) {
+      row.innerHTML = `<span class="streak-mini">🔥 ${p.streak_current} day${p.streak_current === 1 ? "" : "s"}</span>`;
+    } else if (row) {
+      row.innerHTML = `<span class="streak-mini" style="opacity:.7">🔥 Start your streak</span>`;
+    }
+  } catch {}
+}
+async function touchVisit() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem("lastTouch") === today) return;
+  try {
+    await api("/api/me/touch", { method: "POST" });
+    localStorage.setItem("lastTouch", today);
+  } catch {}
+}
+
+window.addEventListener("online", () => {
+  renderConnPills();
+  if (currentRoute === "recs") loadRecommendations(true);
+});
+window.addEventListener("offline", renderConnPills);
+
+document.getElementById("password").addEventListener("keydown", e => {
+  if (e.key === "Enter") login();
+});
+if (!location.hash) location.hash = "#/";
+
+boot();
+</script>
+</body>
+</html>
