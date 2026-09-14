@@ -10,5 +10,4 @@ numpy
 scipy
 apscheduler
 pypdf
-# optional but recommended (falls back to TF-IDF if not installed)
-sentence-transformers
+psycopg2-binary
