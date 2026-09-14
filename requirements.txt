@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic[email]
+bcrypt
+python-jose[cryptography]
+python-multipart
+scikit-learn
+numpy
+scipy
+apscheduler
+pypdf
+# optional but recommended (falls back to TF-IDF if not installed)
+sentence-transformers
