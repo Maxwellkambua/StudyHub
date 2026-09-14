@@ -17,14 +17,9 @@ services:
           property: connectionString
       - key: STUDYHUB_DISABLE_SCHEDULER
         value: "0"
-    disk:
-      name: uploads-disk
-      mountPath: /app/uploads
-      sizeGB: 1
 
 databases:
   - name: studyhub-db
     plan: free
     databaseName: studyhub
     user: studyhub_user
-    
