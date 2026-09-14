@@ -1,0 +1,15 @@
+# Virtual environment
+venv/
+__pycache__/
+
+# Local database
+*.db
+
+# Local environment files
+.env
+
+# Uploads folder (we'll handle this differently in production)
+uploads/
+
+# VS Code settings
+.vscode/
