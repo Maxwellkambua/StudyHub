@@ -887,3 +887,38 @@ if os.environ.get("STUDYHUB_DISABLE_SCHEDULER") != "1":
 # ==================================================================
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+
+import subprocess
+from fastapi import Query
+import os
+
+
+@app.get("/api/admin/seed-database", tags=["admin"])
+def seed_database(
+    key: str = Query(...), # This makes the "key" parameter required
+    user: models.User = Depends(auth.get_current_user)
+):
+    """
+    TEMPORARY ENDPOINT: Run the database seeding script.
+    Protected by a secret key and admin login.
+    """
+    _require_admin(user)
+    
+    # Set a secret key in your Render environment variables
+    expected_key = os.getenv("SEED_SECRET_KEY")
+    if not expected_key or key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid seed key.")
+        
+    try:
+        # Run the seed script as a subprocess
+        result = subprocess.run(
+            [sys.executable, "run_seed.py"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return {"ok": True, "message": "Seeding successful!", "output": result.stdout}
+    except subprocess.CalledProcessError as e:
+        return {"ok": False, "message": "Seeding failed!", "output": e.stderr}
+    
