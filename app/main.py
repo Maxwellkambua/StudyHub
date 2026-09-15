@@ -1,4 +1,6 @@
 """StudyHub API — Phase 6."""
+import subprocess
+import sys 
 import os
 import atexit
 from datetime import datetime, timedelta, timezone
@@ -35,6 +37,23 @@ app.add_middleware(
 # ==================================================================
 # HELPERS
 # ==================================================================
+
+@app.get("/api/admin/seed-database", tags=["admin"])
+def seed_database(key: str = Query(...)):
+    """TEMPORARY: seed the database. Remove after use."""
+    expected = os.getenv("SEED_SECRET_KEY")
+    if not expected or key != expected:
+        raise HTTPException(403, "Invalid key")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import sys; sys.path.insert(0, '.'); import seed"],
+            capture_output=True, text=True, check=True
+        )
+        return {"ok": True, "output": result.stdout[-2000:]}
+    except subprocess.CalledProcessError as e:
+        return {"ok": False, "output": e.stderr[-2000:]}
+
+    
 def _calc_streak(db: Session, user_id: int) -> tuple[int, int]:
     rows = db.query(models.LoginEvent.created_at).filter(
         models.LoginEvent.user_id == user_id).all()
